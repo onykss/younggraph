@@ -1,0 +1,19 @@
+# depslib dependency file v1.0
+1717688167 source:d:\Институт\4 сем\altgraph\main.cpp
+	<iostream>
+	<string.h>
+	<cstdlib>
+	<queue>
+	<fstream>
+	<vector>
+	<windows.h>
+
+1717688167 source:d:\ygraph\main.cpp
+	<iostream>
+	<string.h>
+	<cstdlib>
+	<queue>
+	<fstream>
+	<vector>
+	<windows.h>
+

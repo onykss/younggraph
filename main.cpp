@@ -27,12 +27,16 @@ struct Diagram
     int CountOfChildren;
     int OutFlag;
     int color;
+    int * prime_c;
+    int CountOfPrimeChildren;
 
     Diagram()
     {
         Children = nullptr;
         CountOfChildren = 0;
         ivals = new int[200];
+        prime_c = new int[201];
+        CountOfPrimeChildren = 0;
         ways = 1;
         color = -1;
     }
@@ -90,9 +94,9 @@ struct Diagram
                 }
                 else if (current->level < level)
                 {
-                    for (int j = 0; j < current->CountOfChildren; j++)
+                    for (int j = 0; j < current->CountOfPrimeChildren; j++)
                     {
-                        q.push(current->Children[j]);
+                        q.push(current->Children[current->prime_c[j]]);
                     }
 
                 }
@@ -213,7 +217,7 @@ int main()
         ways_system.push_back({1});
     }
 
-    cout << "10%  |##------------------|";
+    cout << "\n10%  |##------------------| Start of generation";
 
     AddChildren(CountOfLevels-1, Head->first, Head->first, Head, subgraph_check);
 
@@ -273,12 +277,12 @@ int main()
         }
     }
 
-    cout << "\n30%  |######--------------|";
+    cout << "\n30%  |######--------------| Start of filling in the adjacency matrix";
 
     int ** matrix;
     matrix = Head->first->FillMatrix(Head);
 
-    cout << "\n40%  |########------------|";
+    cout << "\n40%  |########------------| Start of visualization";
 
     string command = "vizualize\\.venv\\Scripts\\python.exe vizualize\\viz.py";
 
@@ -384,6 +388,8 @@ void AddChildren(int levels, drgm * El, drgm * first, head * Head, int subgraph_
                 {
                     Child->ways = El->ways;
                     El->Children[El->CountOfChildren-1] = Child;
+                    El->prime_c[El->CountOfPrimeChildren] = El->CountOfChildren-1;
+                    El->CountOfPrimeChildren += 1;
                     Head->CountOfElements++;
 
                     if (Child->level < levels) AddChildren(levels, El->Children[El->CountOfChildren-1], first, Head, subgraph_check);

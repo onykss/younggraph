@@ -19,7 +19,7 @@ def visualize(parts, edges, str_parts, clrs):
     #словарь с координатами для входа и выхода ребер
     ver_coords = {}
 
-    #начальные координаты. Заменить на максимальный ряд
+    #начальные координаты.
     wigth = 0
     max_wigth = 0
     num = 0
@@ -49,6 +49,7 @@ def visualize(parts, edges, str_parts, clrs):
     ex_wigth = 1
 
     graph = svgwrite.Drawing('svgimg.svg', size=(str(wigth) + "px", str(height) + "px"), profile='full')
+    # graph.add(graph.rect((0, 0), (wigth, height), fill='#043371', fill_opacity=1, stroke='black'))
 
     for b in range(0, len(parts)):
         if b > 0:
@@ -71,7 +72,7 @@ def visualize(parts, edges, str_parts, clrs):
                 for g in range(0, int(parts[b][e][k])):
 
                     if color_necessary:
-                        graph.add(graph.rect((fx, fy + (10 * g)), (10, 10), fill='#FF0000', fill_opacity=clrs[b][e], stroke='black'))
+                        graph.add(graph.rect((fx, fy + (10 * g)), (10, 10), fill=clrs[b][e][1], fill_opacity=clrs[b][e][0], stroke='black'))
                     else:
                         graph.add(graph.rect((fx, fy + (10 * g)), (10, 10), fill='#FFFFFF', stroke='black'))
 
@@ -136,7 +137,9 @@ if __name__ == "__main__":
             el = i
             x = i.split("$")
             i = x[0]
-            c = float(x[1])
+            c = []
+            c.append(float(x[1]))
+            c.append(x[2])
             i = i.split(";")
             for j in i:
                 summ += int(j)

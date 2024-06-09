@@ -5,6 +5,8 @@
 #include <fstream>
 #include <vector>
 #include <windows.h>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -170,10 +172,13 @@ struct Diagram
 typedef struct Diagram drgm;
 typedef struct Head head;
 
-void AddChildren(int levels, drgm * El, drgm * first, head * Head, int subgraph_check);
+void AddChildren(int levels, drgm * El, drgm * first, head * Head, int subgraph_check, int K, int n, int m);
 void IncrWays(drgm* El, int x);
 bool Shura(drgm * el);
-float GetColor(drgm* El, vector<vector<int>> wsys, int* stats);
+float GetOpacity(drgm* El, vector<vector<int>> wsys, int* stats);
+
+bool SmallerTK(drgm * el, int k);
+bool MNrectangle(drgm * el, int n, int m);
 
 int main()
 {
@@ -182,6 +187,10 @@ int main()
     int CountOfLevels;
     int subgraph_check;
     int ribs, clr;
+    int nes_of_contrast;
+    int r, g, b;
+    int cr, cg, cb;
+    int K, n, m;
 
     drgm * First;
     First = new(drgm);
@@ -203,13 +212,53 @@ int main()
 
     cout << "Count of levels: ";
     cin >> CountOfLevels;
-    cout << "\nChose the way of generate:\n0 - classic young graph\n1 - Shura's subgraph\n";
+    cout << "\nChose the way of generate:\n0 - classic young graph\n1 - Shura's subgraph\n2 - <=K subgraph\n3 - MNrectangle subgraph\n";
     cout << "Enter: ";
     cin >> subgraph_check;
+    if (subgraph_check == 2)
+    {
+        cout << "\nEnter K: ";
+        cin >> K;
+    }
+    else if (subgraph_check == 3)
+    {
+        cout << "\nEnter n (height): ";
+        cin >> n;
+        cout << "Enter m (width): ";
+        cin >> m;
+    }
     cout << "\nEdge mapping (1 - Yes | 0 - No): ";
     cin >> ribs;
     cout << "\nTint diagrams (1 - Yes | 0 - No): ";
     cin >> clr;
+    if (clr)
+    {
+        cout << "\nValue will be in range [0, 255]";
+        cout << "\nEnter RED scale: ";
+        cin >> r;
+        cout << "Enter GREEN scale: ";
+        cin >> g;
+        cout << "Enter BLUE scale: ";
+        cin >> b;
+        cout << "\nIs a contrasting color necessary? (1 - Yes | 0 - No): ";
+        cin >> nes_of_contrast;
+        if (nes_of_contrast)
+        {
+            cout << "\nEnter RED scale: ";
+            cin >> cr;
+            cout << "Enter GREEN scale: ";
+            cin >> cg;
+            cout << "Enter BLUE scale: ";
+            cin >> cb;
+        }
+    }
+    ostringstream MainColor;
+    ostringstream ConColor;
+    MainColor << "#" << hex << setfill('0') << setw(2) << r << setw(2) << g << setw(2) << b;
+    if (nes_of_contrast)
+    {
+        ConColor << "#" << hex << setfill('0') << setw(2) << cr << setw(2) << cg << setw(2) << cb;
+    }
 
     stats = (int*)calloc(CountOfLevels, sizeof(int));
     for (int i = 0; i < CountOfLevels; i++)
@@ -219,7 +268,7 @@ int main()
 
     cout << "\n10%  |##------------------| Start of generation";
 
-    AddChildren(CountOfLevels-1, Head->first, Head->first, Head, subgraph_check);
+    AddChildren(CountOfLevels-1, Head->first, Head->first, Head, subgraph_check, K, n, m);
 
     queue<drgm*> qu;
     qu.push(Head->first);
@@ -267,7 +316,22 @@ int main()
                     if (i < current->len-2) fout << current->ivals[i] << ";";
                     else fout << current->ivals[i];
                 }
-                fout << "$" << GetColor(current, ways_system, stats) << "' ";
+
+                float opacity = GetOpacity(current, ways_system, stats);
+                if (nes_of_contrast)
+                {
+                    if (opacity == 1
+                        ) fout << "$" << opacity << "$" << ConColor.str() << "' ";
+                    else
+                    {
+                        fout << "$" << opacity << "$" << MainColor.str() << "' ";
+                    }
+                }
+                else
+                {
+                    fout << "$" << opacity << "$" << MainColor.str() << "' ";
+                }
+
                 current->OutFlag = 1;
             }
             for (int j = 0; j < current->CountOfChildren; j++)
@@ -327,7 +391,7 @@ int main()
     return 0;
 }
 
-void AddChildren(int levels, drgm * El, drgm * first, head * Head, int subgraph_check)
+void AddChildren(int levels, drgm * El, drgm * first, head * Head, int subgraph_check, int K, int n, int m)
 {
     for (int j = 0; j < El->len; j++)
     {
@@ -367,7 +431,20 @@ void AddChildren(int levels, drgm * El, drgm * first, head * Head, int subgraph_
                     accordance = false;
                 }
                 break;
-
+            case 2:
+                if (!SmallerTK(Child, K))
+                {
+                    delete Child;
+                    accordance = false;
+                }
+                break;
+            case 3:
+                if (!MNrectangle(Child, n, m))
+                {
+                    delete Child;
+                    accordance = false;
+                }
+                break;
             }
 
 //-------------------------------------------------------------------------------------------------------------------------------------
@@ -392,7 +469,7 @@ void AddChildren(int levels, drgm * El, drgm * first, head * Head, int subgraph_
                     El->CountOfPrimeChildren += 1;
                     Head->CountOfElements++;
 
-                    if (Child->level < levels) AddChildren(levels, El->Children[El->CountOfChildren-1], first, Head, subgraph_check);
+                    if (Child->level < levels) AddChildren(levels, El->Children[El->CountOfChildren-1], first, Head, subgraph_check, K, n, m);
                 }
 
             }
@@ -410,7 +487,7 @@ void IncrWays(drgm* El, int x)
     }
 }
 
-float GetColor(drgm* El, vector<vector<int>> wsys, int* stats)
+float GetOpacity(drgm* El, vector<vector<int>> wsys, int* stats)
 {
     int wMax = 0;
     for (int i = 0; i < stats[El->level]; i++)
@@ -430,5 +507,19 @@ bool Shura(drgm * el)
     {
         if (el->ivals[i] == el->ivals[i+1]) res = false;
     }
+    return res;
+}
+
+bool SmallerTK(drgm * el, int k)
+{
+    bool res = true;
+    if (el->len-1 > k) res = false;
+    return res;
+}
+
+bool MNrectangle(drgm* el, int n, int m)
+{
+    bool res = true;
+    if (el->len-1 > m || el->ivals[0] > n) res = false;
     return res;
 }
